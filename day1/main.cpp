@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include <tuple>
 
 using namespace std;
 
@@ -36,44 +37,56 @@ vector<int> readFile(string filename) {
     return output;
 }
 
-int computeNextValue(int curValue, int move) {
-    // TODO: The values can be hire than 99, so we need to account for that
-    if (abs(move) > 100) {
-        // Taking the mod will give us the actual number we care about
-        move = move % 100;
-    }
+struct nextValCal {
+    int nextVal;
+    int zeroCount;
+};
 
-    if (move <= 0) {
-        // We are moving left. Does doing so put us below zero?
-        if (curValue < abs(move)) {
-            int difference = abs(move) - curValue - 1; // sub 1 to account for zero
-            return 99 - difference;
-        } else {
-            return curValue + move;
+nextValCal computeNextValue(int curValue, int move) {
+    int zeroCount = 0;
+    int nextValue = curValue;
+    if (move < 0) {
+        while (move < 0) {
+            nextValue--;
+            if (nextValue < 0) {
+                nextValue = 99;
+            }
+            if (nextValue == 0) {
+                zeroCount++;
+            }
+            move++;
+            cout << "nextVal " << nextValue << " curMove " << move << "\n";
         }
     } else {
-        // We are moving right. Does doing so put us above 99?
-        int sum = curValue + move;
-        if (sum > 99) {
-            return sum - 99 - 1; // sub 1 to account for zero
-        } else {
-            return sum;
+        while (move > 0) {
+            nextValue++;
+            if (nextValue > 99) {
+                nextValue = 0;
+            }
+            if (nextValue == 0) {
+                zeroCount++;
+            }
+            move--;
         }
     }
+
+    nextValCal valCal;
+    valCal.nextVal = nextValue;
+    valCal.zeroCount = zeroCount;
+    return valCal;
 }
 
 int main() {
-    vector<int> input = readFile("input_part_1.txt");
+    vector<int> input = readFile("input.txt");
     int zeroCounts = 0;
     int curValue = 50;
     for (int i = 0; i < input.size(); i++) {
         int nextMove = input[i];
         int prevVal = curValue;
-        curValue = computeNextValue(curValue, nextMove);
+        nextValCal nextVal = computeNextValue(curValue, nextMove);
+        curValue = nextVal.nextVal;
+        zeroCounts += nextVal.zeroCount;
         cout <<"curvalue " << prevVal << " moving " << nextMove << " results in " << curValue << "\n";
-        if (curValue == 0) {
-            zeroCounts++;
-        }
     }
     cout << zeroCounts;
 }
