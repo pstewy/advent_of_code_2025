@@ -53,7 +53,7 @@ function main() {
     const ids: string[] = loadFile();
     let totalInvalidIDs = 0;
 
-    ids.map((id => {
+    ids.forEach((id => {
        checkRange(id).forEach((invalidID) => {
         totalInvalidIDs += invalidID;
        }) 
