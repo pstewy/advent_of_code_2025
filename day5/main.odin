@@ -4,6 +4,7 @@ import "core:strconv"
 import "core:strings"
 import "core:fmt"
 import "core:os"
+import "core:sort"
 
 main :: proc() {
     kitchen_db, err := read_file("input.txt") 
@@ -11,7 +12,7 @@ main :: proc() {
         fmt.println("failed reading file", err)
         panic("panic because I'm too lazy to convert the err to a string")
     }
-    fmt.println(part_1(kitchen_db))
+    fmt.println(part_2(kitchen_db))
 }
 
 Range :: struct {
@@ -45,6 +46,35 @@ part_1 :: proc(using db: KitchenDatabase) -> int {
     return freshIDs
 }
 
+part_2 :: proc(using db: KitchenDatabase) -> int {
+    consolidated_ranges: [dynamic]Range
+    append(&consolidated_ranges, ranges[0])
+    for i in 1..<len(ranges) {
+        last := &consolidated_ranges[len(consolidated_ranges)-1]
+        cur := ranges[i]
+        if last.end >= cur.start {
+            if cur.end >= last.end {
+                fmt.println("consolidated", cur, "with", last)
+                last.end = cur.end
+            }
+        } else {
+            append(&consolidated_ranges, cur)
+        }
+    }
+    
+    totalIds: int
+    for range in consolidated_ranges {
+        fmt.println("range", range.start, range.end)
+        res := (range.end - range.start) + 1 // add one for inclusivity
+        if res < 0 {
+            fmt.println("wtf", range)
+        }
+        totalIds += res
+    }
+
+    return totalIds 
+}
+
 
 read_file :: proc(filename: string) -> (db: KitchenDatabase, err: union { os.Error, Error }) {
     db = KitchenDatabase{};
@@ -57,6 +87,9 @@ read_file :: proc(filename: string) -> (db: KitchenDatabase, err: union { os.Err
     }
     db.ranges= pull_accepted_values(input[0]) or_return
     db.ingredients = pull_ingredients(input[1]) or_return
+    sort.quick_sort_proc(db.ranges, proc(a, b: Range) -> int {
+        return a.start - b.start
+    })
     return db, .None
 }
 
